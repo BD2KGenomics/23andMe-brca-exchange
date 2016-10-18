@@ -1,6 +1,3 @@
-#!/usr/bin/python
-
-
 import getpass
 import os
 from optparse import OptionParser
@@ -14,15 +11,14 @@ from requests_oauthlib import OAuth2Session
 PORT = 5000
 API_SERVER = 'api.23andme.com'
 BASE_CLIENT_URL = 'http://localhost:%s/' % PORT
-DEFAULT_REDIRECT_URI = '%sreceive_code/' % BASE_CLIENT_URL
+DEFAULT_REDIRECT_URI = '%sapp/' % BASE_CLIENT_URL
+PAGE_HEADER = "23andMe + GA4GH"
 
-# so we don't get errors if the redirect uri is not https
+# So we don't get errors if the redirect uri is not https.
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = '1'
 
-#
-# you can pass in more scopes through the command line, or change these
-#
-DEFAULT_SNPS = ['rs12913832']
+# Pass in more scopes through the command line, or change these:
+DEFAULT_SNPS = ['rs12913832', 'rs3088053', 'rs1000068']
 DEFAULT_SCOPES = ['names', 'basic'] + DEFAULT_SNPS
 
 # the command line will ask for a client_secret if you choose to not hardcode
@@ -62,30 +58,32 @@ if not options.client_id:
 
 if not client_secret:
     print "Please navigate to your developer dashboard [%s/dev/] to retrieve your client_secret." % BASE_API_URL
-    client_secret = getpass.getpass("Please enter your client_secret:")
+    client_secret = getpass.getpass("Please enter your client_secret: ")
 
 app = flask.Flask(__name__)
 
 
 @app.route('/')
 def index():
-    ttam_oauth = OAuth2Session(client_id,
-                               redirect_uri=redirect_uri,
+    """Here, we authenticate the user before transitioning to the app.  There
+    should be no way of getting to the app without this step."""
+    ttam_oauth = OAuth2Session(client_id, redirect_uri=redirect_uri,
                                scope=scopes)
     auth_url, state = ttam_oauth.authorization_url(API_AUTH_URL)
-    return flask.render_template('index.html', auth_url=auth_url)
+    return flask.render_template('index.html', auth_url=auth_url,
+        page_header=PAGE_HEADER, page_title=PAGE_HEADER, client_id=client_id)
 
 
-@app.route('/receive_code/')
-def receive_code():
-    # now we hit the /token endpoint to get the access_token
-    ttam_oauth = OAuth2Session(client_id,
-                               redirect_uri=redirect_uri)
+@app.route('/app/')
+def app2():
+    """Represents our application, which makes use of 2 APIs: 23andMe, and
+    GA4GH (into BRCA Exchange)."""
+    # Hit the /token endpoint to get the access_token.
+    ttam_oauth = OAuth2Session(client_id, redirect_uri=redirect_uri)
     token_dict = ttam_oauth.fetch_token(API_TOKEN_URL,
                                         client_secret=client_secret,
                                         authorization_response=request.url)
-
-    # the response token_dict is of the form
+    # The response token_dict is of the form:
     # {
     #     'token_type': 'bearer',
     #     'refresh_token': '7cb92495fe515f0bfe94775e2b06b46b',
@@ -96,18 +94,25 @@ def receive_code():
 
     access_token = token_dict['access_token']
 
-    # now you have the access_token to make queries with
-    # enter your code here
+    # Now you have the access_token to make queries with enter your code here.
     #
-    # the following is a sample of how you can use the access_token to make your API queries
-    # it makes query to the /genotype endpoint and gets information about the requested SNPS
+    # the following is a sample of how you can use the access_token to make
+    # your API queries it makes query to the /genotype endpoint and gets
+    # information about the requested SNPS
     headers = {'Authorization': 'Bearer %s' % access_token}
     genotype_response = requests.get("%s%s" % (BASE_API_URL, "/1/genotype/"),
                                      params={'locations': ' '.join(DEFAULT_SNPS)},
                                      headers=headers,
                                      verify=False)
+    basic_response = requests.get("%s%s" % (BASE_API_URL, "/1/user/"),
+                                     headers=headers,
+                                     verify=False)
+    if basic_response.status_code == 200:
+        print(basic_response)
     if genotype_response.status_code == 200:
-        return flask.render_template('receive_code.html', response_json=genotype_response.json())
+        return flask.render_template('app.html', page_header=PAGE_HEADER,
+            response_json=genotype_response.json(), home_url=BASE_CLIENT_URL,
+            page_title=PAGE_HEADER, client_id=client_id)
     else:
         # print 'response text = ', genotype_response.text
         genotype_response.raise_for_status()

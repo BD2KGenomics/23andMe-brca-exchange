@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}23andMe + GA4GH{% endblock %}
+{% block body %}
+<h1>{{page_header}}</h1>
+<p>Authentication has been successful.</p>
+<div ng-app="">
+    <p>You've retrieved the following genotypes from the api</p>
+    <table border=1>
+        <tr>
+            <th scope='col'>profile id</th>
+            <th scope='col'>rs12913832</th>
+        </tr>
+        {% for p in response_json %}
+        <tr>
+            <td>{{p.id}}</td>
+            <td>{{p.rs12913832}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+<p>Name: <input type="text" ng-model="name"></p>
+<p ng-bind="name"></p>
+</div>
+
+<br>
+<a href="{{home_url}}">Home</a>
+{% endblock %}

@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}
-Welcome to the 23andMe API example client
-{% endblock %}
+{% block title %}23andMe + GA4GH{% endblock %}
 
 {% block body %}
-<h1>Welcome to the 23andme example client</h1>
-<p>This demo will take you through the basic authentication flow</p>
-<p><a href="{{auth_url}}">Click here</a> to authorize this client to access your genetics. After authorizing the application, you will be forwarded back to this application with a code that displays.</p>
+<h1>{{page_header}}</h1>
+<p>This service cross-references data about yourself from 23andMe with data from BRCA Exchange.</p>
+<p>You need to explicitly give this application permission to obtain your data from 23andMe, in order to use this service.</p>
+<p><a href="{{auth_url}}">Click here</a> to authorize this client to authorize.  You should be redirected 23andMe's web site and you'll be asked.  After authorizing, you should be forwarded back to this application with a reference code.</p>
+<div id="wrapper"></div>
 {% endblock %}
