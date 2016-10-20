@@ -21,8 +21,8 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = '1'
 DEFAULT_SNPS = ['rs12913832', 'rs3088053', 'rs1000068']
 DEFAULT_SCOPES = ['names', 'basic'] + DEFAULT_SNPS
 
-# the command line will ask for a client_secret if you choose to not hardcode
-# the app's client_secret here
+# The program will ask for a client_secret if you choose to not hardcode one
+# here.
 client_secret = None
 
 parser = OptionParser(usage="usage: %prog -i CLIENT_ID [options]")
@@ -109,6 +109,15 @@ def app2():
                                      verify=False)
     if basic_response.status_code == 200:
         print(basic_response)
+    else:
+        basic_response.raise_for_status()
+    #names_response = requests.get("%s%s" % (BASE_API_URL, "/1/names/"),
+    #                                 headers=headers,
+    #                                 verify=False)
+    #if names_response.status_code == 200:
+    #    print(names_response)
+    #else:
+    #    names_response.raise_for_status()
     if genotype_response.status_code == 200:
         return flask.render_template('app.html', page_header=PAGE_HEADER,
             response_json=genotype_response.json(), home_url=BASE_CLIENT_URL,
