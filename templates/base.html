@@ -2,12 +2,12 @@
 <html>
     <head>
         <title>{% block title %}{% endblock %}</title>
-        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+        {# <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script> #}
         <script src="https://api.23andme.com/res/js/ttam-0.3.js"></script>
 	<script>
 	    window.onload = function () {
 		var ttam = TTAM('{{client_id}}');
-		ttam.connectButton('wrapper', ["basic", "genomes"]);
+		ttam.connectButton('wrapper', ["basic", "genomes", "names", "analyses"]);
 	    };
 	</script>
     </head>

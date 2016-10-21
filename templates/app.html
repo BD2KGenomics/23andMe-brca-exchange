@@ -5,11 +5,18 @@
 <p>Authentication has been successful.</p>
 <div ng-app="">
     <p>You've retrieved the following genotypes from the api</p>
+    <p>Your code is {{code}}</p>
     <table border=1>
         <tr>
             <th scope='col'>profile id</th>
             <th scope='col'>rs12913832</th>
         </tr>
+        {% for p in results %}
+        <tr>
+            <td>{{p}}</td>
+            <td>4</td>
+        </tr>
+        {% endfor %}
         {% for p in response_json %}
         <tr>
             <td>{{p.id}}</td>
@@ -17,8 +24,11 @@
         </tr>
         {% endfor %}
     </table>
+
+{#
 <p>Name: <input type="text" ng-model="name"></p>
 <p ng-bind="name"></p>
+#}
 </div>
 
 <br>

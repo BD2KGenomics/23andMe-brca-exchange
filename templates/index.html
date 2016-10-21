@@ -3,8 +3,15 @@
 
 {% block body %}
 <h1>{{page_header}}</h1>
+
 <p>This service cross-references data about yourself from 23andMe with data from BRCA Exchange.</p>
+
 <p>You need to explicitly give this application permission to obtain your data from 23andMe, in order to use this service.</p>
+
 <p>Click the button below to authorize.  You should be redirected to 23andMe's web site, where you'll be asked to confirm.  After authorizing, you should be forwarded back to this application with a reference code, and you can see the results.</p>
-<div id="wrapper"></div>
+
+<center><div id="wrapper"></div></center>
+
+<p>A <a href="{{demo_url}}">demo</a> is also available.
+
 {% endblock %}
