@@ -1,4 +1,5 @@
 import getpass
+import logging
 import os
 from optparse import OptionParser
 
@@ -41,8 +42,13 @@ parser.add_option("-a", "--23andMe-api-server", dest="t23andMe_api_server", defa
 parser.add_option("-p", "--select-profile", dest='select_profile', action='store_true', default=False,
                   help='If present, the auth screen will show a profile select screen')
 parser.add_option("-f", "--ga4gh-api-server", dest="ga4gh_api_server", help="The GA4GH API server location.")
+parser.add_option("-d", "--debug", dest="debug", action="store_true", default=False,
+                  help="Whether or not to provide debugging output.")
 
 (options, args) = parser.parse_args()
+
+DEBUG = options.debug
+
 BASE_API_URL = "https://%s" % options.t23andMe_api_server
 API_AUTH_URL = '%s/authorize' % BASE_API_URL
 API_TOKEN_URL = '%s/token/' % BASE_API_URL
@@ -139,7 +145,10 @@ def _23andMe_queries(client_id, client_secret, redirect_uri):
 
 def _ga4gh_queries():
     """Performs queries against the GA4GH server."""
-    httpClient = g4client.HttpClient(API_SERVER_GA4GH)
+    if DEBUG:
+        httpClient = g4client.HttpClient(API_SERVER_GA4GH, logLevel=logging.DEBUG)
+    else:
+        httpClient = g4client.HttpClient(API_SERVER_GA4GH)
     datasets = list(httpClient.search_datasets())
     variant_sets = list(httpClient.search_variant_sets(dataset_id=datasets[0].id))
     iterator = httpClient.search_variants(variant_set_id=variant_sets[0].id,
@@ -181,4 +190,4 @@ def app2():
 
 if __name__ == '__main__':
     print "A local client for the Personal Genome API is now initialized."
-    app.run(debug=False, port=PORT)
+    app.run(debug=DEBUG, port=PORT)
