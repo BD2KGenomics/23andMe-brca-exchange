@@ -163,7 +163,7 @@ def _ga4gh_queries():
 @app.route('/app/')
 def app2():
     """Represents our application, which makes use of 2 APIs: 23andMe, and
-    GA4GH (into BRCA Exchange)."""
+    BRCA Exchange (via GA4GH)."""
     # Query the 2 APIs and get data responses.
     genotype_response, basic_response = _23andMe_queries(client_id, client_secret, redirect_uri)
     results = _ga4gh_queries()
