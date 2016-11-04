@@ -2,34 +2,66 @@
 {% block title %}23andMe + GA4GH{% endblock %}
 {% block body %}
 <h1>{{page_header}}</h1>
-<p>Authentication has been successful.</p>
-<div ng-app="">
-    <p>You've retrieved the following genotypes from the api</p>
+<p>Authentication has been successful.  The associated account belongs to {{account_first_name}} {{account_last_name}}.</p>
     <p>Your code is {{code}}</p>
+    <p>Basic request: {{user_request_success}}
+    <p>Genotype request: {{genotype_request_success}}
+    <p>Names request: {{names_request_success}}
+    <p>Profile picture request: {{profilepic_request_success}}
+    <p>Neanderthal request: {{neanderthal_request_success}}
+    <p>Relatives request: {{relatives_request_success}}
+    <p>Family members request: {{family_request_success}}
     <table border=1>
         <tr>
             <th scope='col'>profile id</th>
             <th scope='col'>rs12913832</th>
         </tr>
-        {% for p in results %}
+        {% for p in g4results %}
         <tr>
             <td>{{p}}</td>
-            <td>4</td>
         </tr>
         {% endfor %}
-        {% for p in response_json %}
         <tr>
-            <td>{{p.id}}</td>
-            <td>{{p.rs12913832}}</td>
+            <th colspan=2>genotype response</td>
+        </tr>
+        {% for p in genotype_response_json %}
+        <tr>
+            <td>cat: {{p.id}}</td>
+            <td>dog: {{p.rs12913832}}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <th colspan=2>names response</td>
+        </tr>
+        {% for k, v in names_response_json.iteritems()  %}
+        <tr>
+            <td>{{k}}</td>
+            <td>{{v}}</td>
         </tr>
         {% endfor %}
     </table>
+    <br>
+        {% for k, v in user_response_json.iteritems() %}
+            {% if k == "profiles" %}
+                {% for u in v %}
+                    {{u}}
+                {% endfor %}
+            {% else %}
+                {{k}}: {{v}}
+            {% endif %}
+        {% endfor %}
+    <br>
+        {% for p in names_response_json %}
+            ID: {{p.id}}
+            First name: {{p.first_name}}
+            Last name: {{p.last_name}}
+            {% for u in p.profiles %}
+                ID: {{u.id}}
+                First name: {{u.first_name}}
+                Last name: {{u.last_name}}
+            {% endfor %}
+        {% endfor %}
 
-{#
-<p>Name: <input type="text" ng-model="name"></p>
-<p ng-bind="name"></p>
-#}
-</div>
 
 <br>
 <a href="{{home_url}}">Home</a>
