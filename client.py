@@ -145,12 +145,16 @@ def _23andMe_queries(client_id, client_secret, redirect_uri, g4results):
 
     headers = {'Authorization': 'Bearer %s' % access_token}
 
+    user_response = requests.get("%s%s" % (BASE_API_URL, "/1/demo/user/"),
+                                    headers=headers,
+                                    verify=False)
     locations = _compute_locations(g4results)
     genotype_response = requests.get("%s%s" % (BASE_API_URL, "/1/genotype/"),
                                     params={'locations': ' '.join(DEFAULT_SNPS)},
                                     headers=headers,
                                     verify=False)
-    user_response = requests.get("%s%s" % (BASE_API_URL, "/1/demo/user/"),
+    genotype_response2 = requests.get("%s%s" % (BASE_API_URL, "/1/genotypes/SP1_FATHER_V3/SP1_FATHER_V3/"),
+                                    params={'locations': ' '.join(DEFAULT_SNPS)},
                                     headers=headers,
                                     verify=False)
     names_response = requests.get("%s%s" % (BASE_API_URL, "/1/demo/names/"),
@@ -188,16 +192,9 @@ def _ga4gh_queries():
             for variant_set in variant_sets:
                 for reference_name in REFERENCE_NAMES:
                     iterator = httpClient.search_variants(variant_set_id=variant_set.id,
-<<<<<<< HEAD
                         #reference_name=reference_name, start=45000, end=50000)
                         reference_name=reference_name, start=32315650, end=32315660)
                         #reference_name="13", start=0, end=500000)
-=======
-                    #iterator = httpClient.search_variants(variant_set_id='brca-hg38',
-                        #reference_name=reference_name, start=45000, end=50000)
-                        #reference_name="13", start=32315650, end=32315660)
-                        reference_name="13", start=0, end=500000)
->>>>>>> 1f535f0945db0f0fdf5226ced536a595fff5ff71
                     for variant in iterator:
                         r = (variant.reference_name, variant.start, variant.end,\
                             variant.reference_bases, variant.alternate_bases)
@@ -206,22 +203,14 @@ def _ga4gh_queries():
             c += 1
             print(e)
         print c
-<<<<<<< HEAD
     return (datasets, variant_sets, results)
-=======
-    return results
->>>>>>> 1f535f0945db0f0fdf5226ced536a595fff5ff71
 
 @app.route('/app/')
 def app2():
     """Represents our application, which makes use of 2 APIs: 23andMe, and
     BRCA Exchange (via GA4GH)."""
     # Query the 2 APIs and get data responses.
-<<<<<<< HEAD
     datasets, variant_sets, g4results = _ga4gh_queries()
-=======
-    g4results = _ga4gh_queries()
->>>>>>> 1f535f0945db0f0fdf5226ced536a595fff5ff71
     genotype_response, user_response, names_response, profilepic_response, family_response, neanderthal_response, relatives_response = _23andMe_queries(client_id, client_secret, redirect_uri, g4results)
 
     # Process the data.
