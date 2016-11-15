@@ -6,15 +6,21 @@
     <p>Your code is {{code}}</p>
     <p>User request: {{user_request_success}}
     <p>Genotype request: {{genotype_request_success}}
+    <p>Genotype2 request: {{genotype_request_success2}}
     <p>Names request: {{names_request_success}}
+    {#
     <p>Profile picture request: {{profilepic_request_success}}
     <p>Neanderthal request: {{neanderthal_request_success}}
     <p>Relatives request: {{relatives_request_success}}
     <p>Family members request: {{family_request_success}}
+    #}
     <table border=1>
         <tr>
             <th scope='col'>profile id</th>
             <th scope='col'>rs12913832</th>
+        </tr>
+        <tr>
+            <td>Reference name: {{g4reference_name}}</td>
         </tr>
         {% for p in g4results %}
         <tr>
@@ -24,10 +30,19 @@
         <tr>
             <th colspan=2>genotype response</td>
         </tr>
-        {% for p in genotype_response_json %}
+        {% for k, v in genotype_response_json.iteritems() %}
         <tr>
-            <td>cat: {{p.id}}</td>
-            <td>dog: {{p.rs12913832}}</td>
+            <td>cat: {{k}}</td>
+            <td>dog: {{v}}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <th colspan=2>genotype2 response</td>
+        </tr>
+        {% for k, v in genotype_response_json2.iteritems() %}
+        <tr>
+            <td>cat: {{k}}</td>
+            <td>dog: {{v}}</td>
         </tr>
         {% endfor %}
         <tr>
@@ -51,7 +66,10 @@
             {% endif %}
         {% endfor %}
     <br>
-        {% for p in names_response_json %}
+        {% for k, v in names_response_json.iteritems() %}
+            Key: {{k}}
+            Value: {{v}}
+            {#
             ID: {{p.id}}
             First name: {{p.first_name}}
             Last name: {{p.last_name}}
@@ -60,6 +78,7 @@
                 First name: {{u.first_name}}
                 Last name: {{u.last_name}}
             {% endfor %}
+            #}
         {% endfor %}
 
 

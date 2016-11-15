@@ -2,6 +2,8 @@ import getpass
 import logging
 import sys
 import re
+import pickle
+import csv
 import os
 from optparse import OptionParser
 
@@ -15,6 +17,7 @@ from ga4gh.exceptions import RequestNonSuccessException
 
 
 PORT = 5000
+CACHE_LOCATION = "G423andMe.cache"
 API_SERVER = 'api.23andme.com'
 BASE_CLIENT_URL = 'http://localhost:%s/' % PORT
 DEFAULT_REDIRECT_URI = '%sapp/' % BASE_CLIENT_URL
@@ -28,7 +31,7 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = '1'
 
 # Pass in more scopes through the command line, or change these.
 DEFAULT_SNPS = ['rs12913832', 'rs3088053', 'rs1000068', 'rs206118', 'rs206115']
-DEFAULT_SCOPES = ['names', 'basic'] + DEFAULT_SNPS
+DEFAULT_SCOPES = ['names', 'basic', 'email', 'ancestry', 'family_tree', 'relatives', 'analyses', 'haplogroups', 'phenotypes', 'genomes'] + DEFAULT_SNPS
 
 # The program will ask for a client_secret if you choose to not hardcode one
 # here.
@@ -52,6 +55,7 @@ parser.add_option("-k", "--snps-data", dest='snps_data',
 
 (options, args) = parser.parse_args()
 
+
 DEBUG = options.debug
 
 BASE_API_URL = "https://%s" % options.t23andMe_api_server
@@ -73,6 +77,71 @@ client_id = options.client_id
 if options.client_secret:
     client_secret = options.client_secret
 
+def _compute_locations(g, s):
+    """Computes a more reasonable list of SNPs than DEFAULT_SNPS.
+
+    :param g: G4 API query results.
+    :param s: SNPs data file location.
+    """
+    print "Length of G4 query results: %s" % len(g)
+    if os.path.exists(CACHE_LOCATION):
+        with open(CACHE_LOCATION, 'rb') as fh:
+            cross = pickle.load(fh)
+    else:
+        cross = []
+        found_header = False
+        with open(s, 'r') as fh:
+            reader = csv.reader(fh, delimiter='\t')
+            for row in reader:
+                if not row[0].startswith('#'):
+                    if not found_header:
+                        found_header = True
+                        continue
+                    index, snp, ch, p = row[0], row[1], row[2], row[3]
+                    p = int(p)
+                    for r in g:
+                        if ch == r[0] and (p >= r[1]) and (p <= r[2]):
+                        #if ch == r.info['Chr'].values[0].string_value and (p >= r.start) and (p <= r.end):
+                            cross.append(snp)
+        with open(CACHE_LOCATION, 'wb') as fh:
+            pickle.dump(cross, fh)
+    print "Crosses: %s" % len(cross)
+    return cross if len(cross) > 0 else ' '.join(DEFAULT_SNPS)
+
+
+def _g4_queries():
+    """Performs queries against the GA4GH server."""
+    if DEBUG:
+        httpClient = g4client.HttpClient(API_SERVER_GA4GH, logLevel=logging.DEBUG)
+    else:
+        httpClient = g4client.HttpClient(API_SERVER_GA4GH)
+    # There is currently only 1 dataset available in BRCA, but we'll be robust
+    # and iterate as if there were more.
+    datasets = list(httpClient.search_datasets())
+    results = list()
+    for dataset in datasets:
+        # There should be 3 variant sets; we're only concerned with hg37 for
+        # now though.
+        variant_sets = list(httpClient.search_variant_sets(dataset_id=dataset.id))
+        variant_set = filter(lambda x: x.id == 'brca-hg37', variant_sets)[0]
+        brca2_start = 32889611
+        for reference_name in REFERENCE_NAMES:
+            iterator = httpClient.search_variants(variant_set_id=variant_set.id, reference_name=reference_name, start=brca2_start, end=brca2_start+1000)
+            #iterator = httpClient.search_variants(variant_set_id=variant_set.id, reference_name=reference_name, start=105598600, end=105598700)
+                #reference_name=reference_name, start=32315650, end=32315660)
+                #reference_name="13", start=0, end=500000)
+            for variant in iterator:
+                r = (variant.reference_name, variant.start, variant.end,\
+                    variant.reference_bases, variant.alternate_bases, variant.id,\
+                    variant.info, variant.names)
+                #r = variant
+                results.append(r)
+    return (datasets, variant_sets, results)
+
+
+datasets, variant_sets, g4results = _g4_queries()
+locations = _compute_locations(g4results, SNPS_DATA_FILE)
+print "Locations: %s" % locations
 scopes = options.scopes or DEFAULT_SCOPES
 
 if not options.client_id:
@@ -127,24 +196,7 @@ def index():
         page_header=PAGE_HEADER, page_title=PAGE_HEADER, client_id=client_id)
 
 
-def _compute_locations(g, s):
-    """Computes a more reasonable list of SNPs than the DEFAULT_SNPS above."""
-    result = []
-    cross = []
-    with open(s, 'r') as fh:
-        for l in fh:
-            l = l.strip()
-            m = re.match(r'^(\d+)\s+(\w+)\s+(\w+)\s+(\d+)$', l)
-            if m:
-                index, snp, ch, p = m.groups()
-                for r in g:
-                    if ch == r[0] and (p >= r[0]) and (p <= r[1]):
-                        cross.append(snp)
-    #return ' '.join(DEFAULT_SNPS + cross)
-    return cross
-
-
-def _23andMe_queries(client_id, client_secret, redirect_uri, g4results, s):
+def _23andMe_queries(client_id, client_secret, redirect_uri, s):
     """Handles interaction with the 23andMe API.  Returns the data."""
     global access_token
     if not access_token:
@@ -160,8 +212,7 @@ def _23andMe_queries(client_id, client_secret, redirect_uri, g4results, s):
     user_response = requests.get("%s%s" % (BASE_API_URL, "/1/demo/user/"),
                                     headers=headers,
                                     verify=True)
-    locations = _compute_locations(g4results, SNPS_DATA_FILE)
-    genotype_response = requests.get("%s%s" % (BASE_API_URL, "/1/genotype/"),
+    genotype_response = requests.get("%s%s" % (BASE_API_URL, "/1/demo/genotypes/SP1_MOTHER_V4/"),
                                     params={'locations': locations},
                                     headers=headers,
                                     verify=True)
@@ -184,39 +235,8 @@ def _23andMe_queries(client_id, client_secret, redirect_uri, g4results, s):
     relatives_response = requests.get("%s%s" % (BASE_API_URL, "/1/demo/relatives/"),
                                     headers=headers,
                                     verify=True)
-    return genotype_response, user_response, names_response, profilepic_response, family_response, neanderthal_response, relatives_response
+    return genotype_response, user_response, names_response, profilepic_response, family_response, neanderthal_response, relatives_response, genotype_response2
 
-def _ga4gh_queries():
-    """Performs queries against the GA4GH server."""
-    if DEBUG:
-        httpClient = g4client.HttpClient(API_SERVER_GA4GH, logLevel=logging.DEBUG)
-    else:
-        httpClient = g4client.HttpClient(API_SERVER_GA4GH)
-    # There is currently only 1 dataset available in BRCA, but we'll be robust
-    # and iterate as if there were more.
-    datasets = list(httpClient.search_datasets())
-    results = list()
-    for dataset in datasets:
-        # There should be 3 variant sets.
-        variant_sets = list(httpClient.search_variant_sets(dataset_id=dataset.id))
-        c = 0
-        try:
-            grch37 = filter(lambda x: x.id == 'brca-hg37', variant_sets)[0]
-            variant_set = grch37
-            for variant_set in variant_sets:
-                for reference_name in REFERENCE_NAMES:
-                    iterator = httpClient.search_variants(variant_set_id=variant_set.id, reference_name=reference_name, end=32889762, start=32889611)
-                        #reference_name=reference_name, start=32315650, end=32315660)
-                        #reference_name="13", start=0, end=500000)
-                    for variant in iterator:
-                        r = (variant.reference_name, variant.start, variant.end,\
-                            variant.reference_bases, variant.alternate_bases)
-                        results.append(r)
-        except RequestNonSuccessException as e:
-            c += 1
-            print(e)
-        #print c
-    return (datasets, variant_sets, results)
 
 @app.route('/app/')
 def app2():
@@ -224,8 +244,8 @@ def app2():
     BRCA Exchange (via GA4GH)."""
     # Query the 2 APIs and get data responses.
     s = SNPS_DATA_FILE
-    datasets, variant_sets, g4results = _ga4gh_queries()
-    genotype_response, user_response, names_response, profilepic_response, family_response, neanderthal_response, relatives_response = _23andMe_queries(client_id, client_secret, redirect_uri, g4results, s)
+    global g4results
+    genotype_response, user_response, names_response, profilepic_response, family_response, neanderthal_response, relatives_response, genotype_response2 = _23andMe_queries(client_id, client_secret, redirect_uri, s)
 
     # Process the data.
     user_request_success = False
@@ -265,16 +285,25 @@ def app2():
         genotype_request_success = True
     #else:
     #    genotype_response.raise_for_status()
+    genotype_request_success2 = False
+    if genotype_response2.status_code == 200:
+        genotype_request_success2 = True
+    #else:
+    #    genotype_response.raise_for_status()
 
-    #for r in g4results:
-    #    for l in fh
+    def _format_g4results(g):
+        o = []
+        for r in g:
+            r = (r.id, r.names, r.reference_bases, r.reference_name, r.start, r.end, r.calls, r.info['Hg37_Start'].values[0].number_value, r.info['Hg37_End'].values[0].number_value, r.info['AFR_Allele_frequency_1000_Genomes'].values[0].string_value, r.info['EUR_Allele_frequency_1000_Genomes'].values[0].string_value, r.info['Chr'].values[0].string_value, r.info['Pathogenicity_expert'].values[0].string_value, r.info['Ref'].values[0].string_value, r.info['Alt'].values[0].string_value, r.info['Pos'].values[0].string_value, r.info['Allele_Frequency'].values[0].string_value, r.info['Gene_Symbol'].values[0].string_value)
+            o.append(r)
+        return o
+    #g4results = _format_g4results(g4results)
 
     return flask.render_template('app.html', page_header=PAGE_HEADER,
         genotype_response_json=genotype_response.json(),
-        home_url=BASE_CLIENT_URL,
-        user_response_json=user_response.json(),
-        names_response_json=names_response.json(),
-        page_title=PAGE_HEADER, client_id=client_id, code=code,
+        home_url=BASE_CLIENT_URL, user_response_json=user_response.json(),
+        names_response_json=names_response.json(), page_title=PAGE_HEADER,
+        client_id=client_id, code=code, g4reference_name=g4results[0][0],
         g4results=g4results, user_request_success=user_request_success,
         names_request_success=names_request_success,
         family_request_success=family_request_success,
@@ -283,7 +312,9 @@ def app2():
         profilepic_request_success=profilepic_request_success,
         account_first_name=account_first_name,
         genotype_request_success=genotype_request_success,
-        account_last_name=account_last_name)
+        account_last_name=account_last_name,
+        genotype_response_json2=genotype_response2.json(),
+        genotype_request_success2=genotype_request_success2)
 
 
 if __name__ == '__main__':
