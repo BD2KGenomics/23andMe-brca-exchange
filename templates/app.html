@@ -2,11 +2,12 @@
 {% block title %}23andMe + GA4GH{% endblock %}
 {% block body %}
 <h1>{{page_header}}</h1>
-<p>Authentication has been successful.  The associated account belongs to {{account_first_name}} {{account_last_name}}.</p>
+<p>Authentication has been successful.  The associated account belongs to {{account_first_name}} {{account_last_name}} ({{account_id}}).</p>
     <p>Your code is {{code}}</p>
     <p>User request: {{user_request_success}}
-    <p>Genotype request: {{genotype_request_success}}
-    <p>Genotype2 request: {{genotype_request_success2}}
+    {% for gr in genotype_responses %}
+        <p>Genotype request: {{gr[0]}}
+    {% endfor %}
     <p>Names request: {{names_request_success}}
     {#
     <p>Profile picture request: {{profilepic_request_success}}
@@ -14,74 +15,41 @@
     <p>Relatives request: {{relatives_request_success}}
     <p>Family members request: {{family_request_success}}
     #}
+    <form action='.'>
+        <label for="start">Start</label><input type='text' name='start' id='start'>
+        <label for="end">End</label><input type='text' name='end' id='end'>
+        <input type='submit' value='Submit'>
+    </form>
+    <p>Click <a href="{{api_results_url}}">here</a> to see equivalent results in JSON format.  Click <a href="{{app_home_url}}">here</a> to go to the homepage.
     <table border=1>
         <tr>
-            <th scope='col'>profile id</th>
-            <th scope='col'>rs12913832</th>
+            <th colspan=4>genotype responses</td>
         </tr>
-        <tr>
-            <td>Reference name: {{g4reference_name}}</td>
-        </tr>
-        {% for p in g4results %}
-        <tr>
-            <td>{{p}}</td>
-        </tr>
+        {% for gr in genotype_responses %}
+            <tr>
+                <th colspan=4>genotype response</td>
+            </tr>
+            {% for k, v in gr[1].iteritems() %}
+            <tr>
+                <td>Request success: {{gr[0]}}</td>
+                <td>{{k}}</td>
+                <td>{{v}}</td>
+                <td>{{gr[2]}}</td>
+            </tr>
+            {% endfor %}
         {% endfor %}
         <tr>
-            <th colspan=2>genotype response</td>
-        </tr>
-        {% for k, v in genotype_response_json.iteritems() %}
-        <tr>
-            <td>cat: {{k}}</td>
-            <td>dog: {{v}}</td>
-        </tr>
-        {% endfor %}
-        <tr>
-            <th colspan=2>genotype2 response</td>
-        </tr>
-        {% for k, v in genotype_response_json2.iteritems() %}
-        <tr>
-            <td>cat: {{k}}</td>
-            <td>dog: {{v}}</td>
-        </tr>
-        {% endfor %}
-        <tr>
-            <th colspan=2>names response</td>
+            <th colspan=4>names response</td>
         </tr>
         {% for k, v in names_response_json.iteritems()  %}
         <tr>
             <td>{{k}}</td>
             <td>{{v}}</td>
+            <td></td>
+            <td></td>
         </tr>
         {% endfor %}
     </table>
     <br>
-        {% for k, v in user_response_json.iteritems() %}
-            {% if k == "profiles" %}
-                {% for u in v %}
-                    {{u}}
-                {% endfor %}
-            {% else %}
-                {{k}}: {{v}}
-            {% endif %}
-        {% endfor %}
-    <br>
-        {% for k, v in names_response_json.iteritems() %}
-            Key: {{k}}
-            Value: {{v}}
-            {#
-            ID: {{p.id}}
-            First name: {{p.first_name}}
-            Last name: {{p.last_name}}
-            {% for u in p.profiles %}
-                ID: {{u.id}}
-                First name: {{u.first_name}}
-                Last name: {{u.last_name}}
-            {% endfor %}
-            #}
-        {% endfor %}
-
-
-<br>
 <a href="{{home_url}}">Home</a>
 {% endblock %}
