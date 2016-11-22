@@ -2,3 +2,5 @@ requests==2.11.1
 flask==0.11.1
 requests-oauthlib==0.7.0
 ga4gh_client==0.0.1
+Flask-WTF==0.13.1
+WTForms==2.1

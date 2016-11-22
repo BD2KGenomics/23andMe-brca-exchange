@@ -7,15 +7,21 @@
 	<script>
 	    window.onload = function () {
 		var ttam = TTAM('{{client_id}}');
-		ttam.connectButton('wrapper', ["basic", "genomes", "names", "analyses"]);
+		ttam.connectButton('23andMe_connect_button', ["basic", "genomes", "names", "analyses"]);
 	    };
 	</script>
     </head>
 
-    <body>
-        <div style='width:400px;margin:auto;'>
+    {#<body bgcolor="#45FF2F">#}
+    {#<body bgcolor="#333300" text="tan" link="orange" vlink="orange">#}
+    <body bgcolor="#333300" text="#FEFCFF" link="orange" vlink="orange">
+        <div style='width:450px;margin:auto;'>
+        {#<div style='width:80%;margin:auto;'>#}
         {% block body %}
         {% endblock %}
+        <hr>
+        <p>Github project for this app: <a href="http://github.com/dkucsc/farvan">farvan</a>
         </div>
+
     </body>
 </html>

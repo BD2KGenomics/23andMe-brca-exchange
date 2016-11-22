@@ -1,15 +1,21 @@
 {% extends "base.html" %}
-{% block title %}23andMe + GA4GH{% endblock %}
+{% block title %}farvan: 23andMe + BRCA Exchange (via GA4GH){% endblock %}
 
 {% block body %}
 <h1>{{page_header}}</h1>
 
-<p>This service cross-references data about yourself from 23andMe with data from BRCA Exchange.</p>
+<hr>
 
-<p>You need to explicitly give this application permission to obtain your data from 23andMe, in order to use this service.</p>
+<table width=700px>
+<tr>
+<p>This service computes an intersection set of data between 23andMe, and BRCA Exchange via the GA4GH API; it also acts as yet another GA4GH API endpoint.
 
-<p>Click the button below to authorize.  You should be redirected to 23andMe's web site, where you'll be asked to confirm.  After authorizing, you should be forwarded back to this application with a reference code, and you can see the results.</p>
+<p>All you have to do is give this application permission to obtain your data from 23andMe.</p>
 
-<center><div id="wrapper"></div></center>
+<p>Click the button below to authorize.  You should be redirected to 23andMe's web site, where you'll need to log in and you'll be asked to confirm.  After authorizing, you should be forwarded back to this application with a reference code, and you can see the results.</p>
+
+<center><div id="23andMe_connect_button"></div></center>
+</tr>
+</table>
 
 {% endblock %}

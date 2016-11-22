@@ -1,55 +1,91 @@
 {% extends "base.html" %}
+
 {% block title %}23andMe + GA4GH{% endblock %}
 {% block body %}
+
 <h1>{{page_header}}</h1>
-<p>Authentication has been successful.  The associated account belongs to {{account_first_name}} {{account_last_name}} ({{account_id}}).</p>
-    <p>Your code is {{code}}</p>
-    <p>User request: {{user_request_success}}
-    {% for gr in genotype_responses %}
-        <p>Genotype request: {{gr[0]}}
-    {% endfor %}
-    <p>Names request: {{names_request_success}}
-    {#
-    <p>Profile picture request: {{profilepic_request_success}}
-    <p>Neanderthal request: {{neanderthal_request_success}}
-    <p>Relatives request: {{relatives_request_success}}
-    <p>Family members request: {{family_request_success}}
-    #}
+
+<p>Authentication successful.  Your code is {{code}}.</p>
+<hr>
+    <p>Chromosome:
+    <select>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+        <option value="11">11</option>
+        <option value="12">12</option>
+        <option value="13" selected>13</option>
+        <option value="14">14</option>
+        <option value="15">15</option>
+        <option value="16">16</option>
+        <option value="17">17</option>
+        <option value="18">18</option>
+        <option value="19">19</option>
+        <option value="20">20</option>
+        <option value="21">21</option>
+        <option value="22">22</option>
+        <option value="23">23</option>
+        <option value="X">X</option>
+        <option value="Y">Y</option>
+        <option value="MT">MT</option>
+    </select>
+
     <form action='.'>
-        <label for="start">Start</label><input type='text' name='start' id='start'>
-        <label for="end">End</label><input type='text' name='end' id='end'>
+        <label for="start">Start:</label><input type='text' name='start' id='start' value="4">
+        <label for="end">End:</label><input type='text' name='end' id='end' value="5">
         <input type='submit' value='Submit'>
     </form>
+
+    <p>Color guide:
+    <table>
+        <tr><th width="100px">23andMe data</th><th width="100px">GA4GH/(BRCA Exchange) data</th><th width="100px">Combined data</th></tr>
+        <tr><td bgcolor="#FAAC58" width="100px" height="30px"></td><td bgcolor="blue" width="100px" height="30px"></td><td bgcolor="green" width="100px" height="30px"></th></tr>
+    </table>
     <p>Click <a href="{{api_results_url}}">here</a> to see equivalent results in JSON format.  Click <a href="{{app_home_url}}">here</a> to go to the homepage.
+
     <table border=1>
-        <tr>
-            <th colspan=4>genotype responses</td>
-        </tr>
+        <th colspan=3>Results</th>
         {% for gr in genotype_responses %}
+            {% for k, v in gr[2].iteritems() %}
             <tr>
-                <th colspan=4>genotype response</td>
-            </tr>
-            {% for k, v in gr[1].iteritems() %}
-            <tr>
-                <td>Request success: {{gr[0]}}</td>
-                <td>{{k}}</td>
-                <td>{{v}}</td>
-                <td>{{gr[2]}}</td>
+                <td>
+                    {% if k == 'genotypes' %}
+                        <table>
+                            <tr><th>Call</th><th>Location</th></tr>
+                            {% for e in v %}
+                            <tr><td>{{e['call']}}</td><td>{{e['location']}}</td></tr>
+                            {% endfor %}
+                        </table>
+                    {% else %}
+                        {{v}}
+                    {% endif %}
+                </td>
+                <td>{{gr[1]}}</td>
+                <td>
+                    {% for e in gr[3] %}
+                        {{e}}
+                    {% endfor %}
+                </td>
             </tr>
             {% endfor %}
         {% endfor %}
-        <tr>
-            <th colspan=4>names response</td>
-        </tr>
-        {% for k, v in names_response_json.iteritems()  %}
-        <tr>
-            <td>{{k}}</td>
-            <td>{{v}}</td>
-            <td></td>
-            <td></td>
-        </tr>
-        {% endfor %}
+    </table>
+    <table border=1>
+        <th colspan=3>Results</th>
+        <tr><th>User ID</th></tr>
+        <tr><td>User ID: {{user_id}}</td></tr>
     </table>
     <br>
+{#
+<p>Total requests tried: {{requests_tried_count}}
+<p>Total requests succeeded: {{
+#}
 <a href="{{home_url}}">Home</a>
 {% endblock %}
